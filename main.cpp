@@ -31,6 +31,7 @@ struct Texture {
 };
 
 constexpr ImGuiKey menukey = ImGuiKey_A;
+constexpr float menuwidth = 620.0f;
 
 Texture loadtexture(const std::filesystem::path& path) {
     Texture t;
@@ -47,17 +48,18 @@ Texture loadtexture(const std::filesystem::path& path) {
     return t;
 }
 
-void drawlogo(const Texture& rat) {
+void drawrat(const Texture& rat, float title) {
     if (!rat.id) {
         return;
     }
     ImVec2 pos = ImGui::GetWindowPos();
     ImVec2 size = ImGui::GetWindowSize();
-    float h = size.y - ImGui::GetFrameHeight();
-    float w = h * rat.w / rat.h;
+    ImVec2 min(pos.x, pos.y + title);
     ImVec2 max(pos.x + size.x, pos.y + size.y);
-    ImVec2 min(max.x - w, max.y - h);
-    ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)rat.id, min, max, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), IM_COL32_WHITE);
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    dl->PushClipRect(min, max, false);
+    dl->AddImage((ImTextureID)(intptr_t)rat.id, min, max);
+    dl->PopClipRect();
 }
 
 void drawvisuals(Settings& s) {
@@ -81,9 +83,11 @@ void drawmisc(Settings& s) {
 
 bool drawmenu(Settings& s, const Texture& rat) {
     ImGui::SetNextWindowPos(ImVec2(40.0f, 40.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(380.0f, 0.0f), ImGuiCond_FirstUseEver);
-    ImGui::Begin("imgui window", nullptr, ImGuiWindowFlags_NoCollapse);
-    drawlogo(rat);
+    float title = ImGui::GetFrameHeight();
+    float h = rat.id ? menuwidth * rat.h / rat.w : 200.0f;
+    ImGui::SetNextWindowSize(ImVec2(menuwidth, h + title), ImGuiCond_Always);
+    ImGui::Begin("imgui window", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    drawrat(rat, title);
 
     if (ImGui::BeginTabBar("tabs")) {
         if (ImGui::BeginTabItem("ESP")) {
